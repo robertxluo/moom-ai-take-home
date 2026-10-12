@@ -42,13 +42,24 @@ def missing_documents(loan_id: int):
     """Report which required documents this loan file is still missing.
 
     Compares the document types present on the file against the checklist for
-    the file's product.
+    the file's product. An unknown product cannot be evaluated; missing is then
+    null rather than an empty list that would imply the checklist passed.
     """
     rows = db.query("SELECT * FROM loan_file WHERE id = %s", (loan_id,))
     if not rows:
         raise HTTPException(status_code=404, detail="loan file not found")
 
     loan = rows[0]
+
+    if loan["product"] is None:
+        return {
+            "loan_file_id": loan_id,
+            "reference": loan["reference"],
+            "product": None,
+            "evaluated": False,
+            "reason": "unknown_product",
+            "missing": None,
+        }
 
     required = db.query(
         "SELECT doc_type FROM checklist_item WHERE product = %s AND required = true",
@@ -66,5 +77,7 @@ def missing_documents(loan_id: int):
         "loan_file_id": loan_id,
         "reference": loan["reference"],
         "product": loan["product"],
+        "evaluated": True,
+        "reason": None,
         "missing": missing,
     }
