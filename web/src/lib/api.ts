@@ -23,9 +23,10 @@ export type Doc = {
 export type Missing = {
   loan_file_id: number;
   reference: string;
-  product: string | null;
-  missing: string[];
-};
+} & (
+  | { product: string; evaluated: true; reason: null; missing: string[] }
+  | { product: null; evaluated: false; reason: "unknown_product"; missing: null }
+);
 
 async function get<T>(path: string): Promise<T> {
   const res = await fetch(`${BASE}${path}`);

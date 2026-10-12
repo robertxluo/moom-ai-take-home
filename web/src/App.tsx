@@ -16,6 +16,7 @@ export default function App() {
   const [selected, setSelected] = useState<number | null>(null);
   const [docs, setDocs] = useState<Doc[]>([]);
   const [missing, setMissing] = useState<Missing | null>(null);
+  const [missingError, setMissingError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<string | null>(null);
@@ -26,8 +27,19 @@ export default function App() {
 
   useEffect(() => {
     if (selected === null) return;
-    getLoan(selected).then((l) => setDocs(l.documents)).catch(() => setDocs([]));
-    getMissing(selected).then(setMissing).catch(() => setMissing(null));
+    let active = true;
+    setDocs([]);
+    setMissing(null);
+    setMissingError(null);
+    getLoan(selected)
+      .then((l) => { if (active) setDocs(l.documents); })
+      .catch(() => { if (active) setDocs([]); });
+    getMissing(selected)
+      .then((m) => { if (active) setMissing(m); })
+      .catch(() => {
+        if (active) setMissingError("Could not load the missing-document report. Please try again.");
+      });
+    return () => { active = false; };
   }, [selected]);
 
   async function runClassifier() {
@@ -81,7 +93,7 @@ export default function App() {
 
       <div className="grid">
         <LoanList loans={loans} selected={selected} onSelect={setSelected} />
-        <DocumentList docs={docs} missing={missing} />
+        <DocumentList docs={docs} missing={missing} missingError={missingError} />
       </div>
     </div>
   );

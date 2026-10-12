@@ -3,14 +3,31 @@ import type { Doc, Missing } from "../lib/api";
 export default function DocumentList({
   docs,
   missing,
+  missingError,
 }: {
   docs: Doc[];
   missing: Missing | null;
+  missingError: string | null;
 }) {
   return (
     <div className="card">
       <h2>Documents</h2>
-      {missing && missing.missing.length > 0 && (
+      {missingError && (
+        <div className="bar" role="alert" style={{ color: "var(--warn)" }}>
+          {missingError}
+        </div>
+      )}
+      {missing && !missing.evaluated && (
+        <div className="bar" role="status" style={{ color: "var(--warn)" }}>
+          Cannot check missing documents because the loan product is unknown.
+        </div>
+      )}
+      {missing?.evaluated && missing.missing.length === 0 && (
+        <div className="bar" role="status">
+          All required document types are present.
+        </div>
+      )}
+      {missing?.evaluated && missing.missing.length > 0 && (
         <div className="bar">
           <span style={{ color: "var(--muted)", fontSize: 12 }}>Missing:</span>
           {missing.missing.map((m) => (
